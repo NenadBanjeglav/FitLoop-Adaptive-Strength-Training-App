@@ -1,28 +1,36 @@
 import { Link } from "expo-router";
-import { View, Text } from "@/components/atoms/Themed";
+import { View } from "@/components/atoms/Themed";
+import CustomButton from "@/components/atoms/CustomButton";
+import WorkoutListItem from "@/components/molecules/workouts/WorkoutListItem";
+import dummyWorkouts from "@/data/dummyWorkouts";
+import { FlatList } from "react-native";
+
+const workout = dummyWorkouts[0];
 
 export default function HomeScreen() {
   return (
     <View
       style={{
         flex: 1,
-        alignItems: "center",
         gap: 10,
+        backgroundColor: "transparent",
       }}
     >
-      <Text style={{ fontSize: 30 }} lightColor="red" darkColor="blue">
-        Title
-      </Text>
-
-      <Link href={"/workout/current"}>
-        <Text>Resume Current Workout</Text>
+      <Link href={"/workout/current"} asChild>
+        <CustomButton title="Start New Workout" />
       </Link>
 
-      <Text>Home Screen</Text>
-
-      <Link href={`/workout/123`}>
-        <Text>Open Workout with id 123</Text>
-      </Link>
+      <FlatList
+        contentContainerStyle={{ gap: 10, padding: 10 }}
+        data={dummyWorkouts}
+        renderItem={({ item }) => (
+          <WorkoutListItem
+            //@ts-ignore
+            workout={item}
+          />
+        )}
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 }
