@@ -1,24 +1,28 @@
 import { Link } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { View, Text } from "@/components/atoms/Themed";
 
 export default function HomeScreen() {
   return (
-    <View style={styles.container}>
-      <Link href={"/workout/current"}>Resume Current Workout</Link>
+    <View
+      style={{
+        flex: 1,
+        alignItems: "center",
+        gap: 10,
+      }}
+    >
+      <Text style={{ fontSize: 30 }} lightColor="red" darkColor="blue">
+        Title
+      </Text>
+
+      <Link href={"/workout/current"}>
+        <Text>Resume Current Workout</Text>
+      </Link>
 
       <Text>Home Screen</Text>
 
-      <Link href={`/workout/123`}>Open Workout with id 123</Link>
+      <Link href={`/workout/123`}>
+        <Text>Open Workout with id 123</Text>
+      </Link>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
-});

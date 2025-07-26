@@ -1,22 +1,13 @@
 import { Link, useLocalSearchParams } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "@/components/atoms/Themed";
 
 export default function WorkoutDetailsScreen() {
   const { id } = useLocalSearchParams();
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1 }}>
       <Link href={`/`}>Home Screen</Link>
       <Text>Workout Details Screen {id}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

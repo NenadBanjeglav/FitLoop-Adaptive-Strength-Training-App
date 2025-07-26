@@ -1,18 +1,9 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "@/components/atoms/Themed";
 
 export default function CurrentWorkoutScreen() {
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1 }}>
       <Text>Current Workout Screen</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
