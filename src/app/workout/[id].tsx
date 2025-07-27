@@ -26,12 +26,7 @@ export default function WorkoutDetailsScreen() {
         </>
       }
       data={workout.exercises}
-      renderItem={({ item }) => (
-        <WorkoutExerciseItem
-          //@ts-ignore
-          exercise={item}
-        />
-      )}
+      renderItem={({ item }) => <WorkoutExerciseItem exercise={item} />}
     />
   );
 }

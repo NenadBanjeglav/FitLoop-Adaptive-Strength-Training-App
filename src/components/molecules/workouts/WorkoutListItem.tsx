@@ -5,23 +5,13 @@ import { StyleSheet } from "react-native";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { WorkoutWithExercises } from "@/types/models";
 import dayjs from "dayjs";
-import { getBestSet } from "@/utils";
+import { calculateDuration, getBestSet } from "@/utils";
 
 type WorkoutListItem = {
   workout: WorkoutWithExercises;
 };
 
 export default function WorkoutListItem({ workout }: WorkoutListItem) {
-  const calculateDuration = (start: Date, end: Date | null) => {
-    if (!end) return "0:00";
-
-    const duration = dayjs(end).diff(dayjs(start), "minutes");
-    const hours = Math.floor(duration / 60);
-    const minutes = duration % 60;
-
-    return `${hours}:${minutes.toString().padStart(2, "0")}`;
-  };
-
   const totalWeight = workout.exercises.reduce(
     (total, { sets }) =>
       total +

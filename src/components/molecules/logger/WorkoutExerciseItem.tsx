@@ -3,6 +3,7 @@ import { Text, View } from "@/components/atoms/Themed";
 import React from "react";
 import SetItem from "./SetItem";
 import { ExerciseSet } from "@/types/models";
+import CustomButton from "@/components/atoms/CustomButton";
 
 export default function WorkoutExerciseItem() {
   const sets: ExerciseSet[] = [
@@ -51,6 +52,13 @@ export default function WorkoutExerciseItem() {
           <SetItem key={item.id} index={idx} set={item} />
         ))}
       </View>
+
+      <CustomButton
+        title="Add new set"
+        type="link"
+        onPress={() => console.log("Add set")}
+        style={{ padding: 10, marginTop: 10 }}
+      />
     </Card>
   );
 }

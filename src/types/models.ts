@@ -5,9 +5,14 @@ export type Workout = {
 };
 
 export type Exercise = {
-  id: string;
-  workoutId: string;
+  exerciseId: string;
   name: string;
+  gifUrl: string;
+  targetMuscles: string[];
+  bodyParts: string[];
+  equipments: string[];
+  secondaryMuscles: string[];
+  instructions: string[];
 };
 
 export type ExerciseSet = {
