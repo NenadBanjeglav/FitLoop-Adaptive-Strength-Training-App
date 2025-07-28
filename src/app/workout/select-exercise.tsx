@@ -12,9 +12,10 @@ import { Text, TextInput, View } from "@/components/atoms/Themed";
 import { Exercise } from "@/types/models";
 import { getPaginatedExercises } from "@/utils";
 
-import ExerciseItem from "@/components/molecules/ExerciseItem";
+import ExerciseItem from "@/components/molecules/exercise/ExerciseItem";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useWorkouts } from "@/store";
 
 export default function SelectExerciseScreen() {
   const router = useRouter();
@@ -23,7 +24,6 @@ export default function SelectExerciseScreen() {
   const [search, setSearch] = useState("");
   const [exercisesList, setExercisesList] = useState<Exercise[]>([]);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const loadMoreExercises = () => {
     if (nextCursor === null) return;
@@ -34,16 +34,20 @@ export default function SelectExerciseScreen() {
   };
 
   useEffect(() => {
-    setLoading(true);
     const result = getPaginatedExercises(0, search);
     setExercisesList(result.data);
     setNextCursor(result.nextCursor);
-    setLoading(false);
+
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   }, [search]);
 
+  const addExercise = useWorkouts((state) => state.addExercise);
+
   const handleSelect = (exerciseName: string) => {
-    console.log("Selected:", exerciseName);
+    const selected = exercisesList.find((e) => e.name === exerciseName);
+    if (!selected) return;
+
+    addExercise(selected);
     router.back();
   };
 

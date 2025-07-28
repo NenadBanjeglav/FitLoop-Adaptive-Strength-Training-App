@@ -4,8 +4,9 @@ import { Text, View } from "@/components/atoms/Themed";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Exercise } from "@/types/models";
-import MuscleBadge from "./MuscleBadge";
+
 import { capitalizeWords } from "@/utils";
+import MuscleBadge from "./MuscleBadge";
 
 type Props = {
   item: Exercise;
@@ -14,7 +15,10 @@ type Props = {
 
 const ExerciseItem = ({ item, onSelect }: Props) => (
   <Pressable
-    onPress={() => onSelect(item.name)}
+    onPress={() => {
+      onSelect(item.name);
+      console.log(item.name);
+    }}
     style={({ pressed }) => [
       {
         flexDirection: "row",
@@ -77,7 +81,7 @@ const ExerciseItem = ({ item, onSelect }: Props) => (
           padding: 8,
           marginLeft: 8,
         }}
-        hitSlop={40}
+        hitSlop={50}
       >
         <Ionicons name="information-circle-outline" size={22} color="#555" />
       </Pressable>

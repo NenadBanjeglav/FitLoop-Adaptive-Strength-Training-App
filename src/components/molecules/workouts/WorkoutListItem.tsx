@@ -34,7 +34,7 @@ export default function WorkoutListItem({ workout }: WorkoutListItem) {
         const bestSet = getBestSet(exercise.sets);
         return (
           <View
-            key={exercise.id}
+            key={exercise.exerciseId}
             style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
             <Text style={{ color: "gray" }}>

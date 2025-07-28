@@ -1,6 +1,6 @@
 // components/atoms/MuscleBadge.tsx
 
-import { Text, View } from "../atoms/Themed";
+import { Text, View } from "@/components/atoms/Themed";
 
 type Props = {
   label: string;

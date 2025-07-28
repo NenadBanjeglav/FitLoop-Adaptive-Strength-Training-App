@@ -1,14 +1,23 @@
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { View } from "@/components/atoms/Themed";
 import CustomButton from "@/components/atoms/CustomButton";
 import WorkoutListItem from "@/components/molecules/workouts/WorkoutListItem";
-import dummyWorkouts from "@/data/dummyWorkouts";
+
 import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const workout = dummyWorkouts[0];
+import { useWorkouts } from "@/store";
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const currentWorkout = useWorkouts((state) => state.currentWorkout);
+  const startWorkout = useWorkouts((state) => state.startWorkout);
+  const workouts = useWorkouts((state) => state.workouts);
+
+  const onStartWorkout = () => {
+    startWorkout();
+    router.push("/workout/current");
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View
@@ -18,18 +27,19 @@ export default function HomeScreen() {
           backgroundColor: "transparent",
         }}
       >
-        <Link href={"/workout/current"} asChild>
-          <CustomButton title="Start New Workout" />
-        </Link>
+        {currentWorkout ? (
+          <Link href={"/workout/current"} asChild>
+            <CustomButton title="Resume Workout" />
+          </Link>
+        ) : (
+          <CustomButton title="Start New Workout" onPress={onStartWorkout} />
+        )}
 
         <FlatList
           contentContainerStyle={{ gap: 10, padding: 10 }}
-          data={dummyWorkouts}
+          data={workouts}
           renderItem={({ item }) => (
-            <WorkoutListItem
-              //@ts-ignore
-              workout={item}
-            />
+            <WorkoutListItem key={item.id} workout={item} />
           )}
           showsVerticalScrollIndicator={false}
         />

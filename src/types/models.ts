@@ -4,6 +4,22 @@ export type Workout = {
   finishedAt: Date | null;
 };
 
+export type ExerciseSet = {
+  id: string;
+  exerciseId: string;
+  reps?: number;
+  weight?: number;
+  oneRM?: number;
+};
+
+export type LoggedExercise = {
+  id: string;
+  workoutId: string;
+  catalogExerciseId: string;
+  name: string; // snapshot
+  gifUrl: string; // snapshot
+};
+
 export type Exercise = {
   exerciseId: string;
   name: string;
@@ -15,19 +31,11 @@ export type Exercise = {
   instructions: string[];
 };
 
-export type ExerciseSet = {
-  id: string;
-  exerciseId: string;
-  reps?: number;
-  weight?: number;
-  oneRM?: number;
-};
-
 // Additional types for nested structures
 export type WorkoutWithExercises = Workout & {
   exercises: ExerciseWithSets[];
 };
 
-export type ExerciseWithSets = Exercise & {
+export type ExerciseWithSets = LoggedExercise & {
   sets: ExerciseSet[];
 };

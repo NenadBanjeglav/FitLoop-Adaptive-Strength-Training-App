@@ -1,11 +1,18 @@
 import CustomButton from "@/components/atoms/CustomButton";
-import { View } from "@/components/atoms/Themed";
 import WorkoutExerciseItem from "@/components/molecules/logger/WorkoutExerciseItem";
 import WorkoutHeader from "@/components/molecules/logger/WorkoutHeader";
-import { router, Stack } from "expo-router";
+import { useWorkouts } from "@/store";
+import { Redirect, router, Stack } from "expo-router";
 import { FlatList, KeyboardAvoidingView, Platform } from "react-native";
 
 export default function CurrentWorkoutScreen() {
+  const currentWorkout = useWorkouts((state) => state.currentWorkout);
+  const finishWorkout = useWorkouts((state) => state.finishWorkout);
+
+  if (!currentWorkout) {
+    return <Redirect href={"/"} />;
+  }
+
   return (
     <>
       <Stack.Screen
@@ -14,8 +21,9 @@ export default function CurrentWorkoutScreen() {
           headerRight: () => (
             <CustomButton
               title="Finish"
-              onPress={() => console.log("Finished")}
+              onPress={() => finishWorkout()}
               style={{ padding: 7, paddingHorizontal: 15, width: "auto" }}
+              hitSlop={40}
             />
           ),
         }}
@@ -28,8 +36,9 @@ export default function CurrentWorkoutScreen() {
       >
         <FlatList
           contentContainerStyle={{ gap: 10, padding: 10 }}
-          data={[1, 2]}
-          renderItem={() => <WorkoutExerciseItem />}
+          data={currentWorkout.exercises}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <WorkoutExerciseItem exercise={item} />}
           ListHeaderComponent={<WorkoutHeader />}
           ListFooterComponent={
             <CustomButton
