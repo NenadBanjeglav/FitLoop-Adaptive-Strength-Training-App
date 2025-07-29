@@ -5,7 +5,7 @@ import { StyleSheet } from "react-native";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { WorkoutWithExercises } from "@/types/models";
 import dayjs from "dayjs";
-import { calculateDuration, getBestSet } from "@/utils";
+import { calculateDuration, getBestSetByOneRM } from "@/utils";
 
 type WorkoutListItem = {
   workout: WorkoutWithExercises;
@@ -31,21 +31,22 @@ export default function WorkoutListItem({ workout }: WorkoutListItem) {
       </View>
 
       {workout.exercises.map((exercise) => {
-        const bestSet = getBestSet(exercise.sets);
+        const bestSet = getBestSetByOneRM(exercise.sets);
         return (
           <View
-            key={exercise.exerciseId}
+            key={exercise.id}
             style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
             <Text style={{ color: "gray" }}>
               {exercise.sets.length} x {exercise.name}
             </Text>
 
-            {bestSet && (
+            {bestSet && bestSet.weight != null && bestSet.reps != null ? (
               <Text style={{ color: "gray" }}>
-                {bestSet?.reps}{" "}
-                {bestSet?.weight ? `x ${bestSet.weight} kg` : "reps"}
+                {bestSet.weight} x {bestSet.reps}
               </Text>
+            ) : (
+              <Text style={{ color: "gray" }}>No valid sets</Text>
             )}
           </View>
         );

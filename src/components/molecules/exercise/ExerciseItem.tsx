@@ -17,7 +17,6 @@ const ExerciseItem = ({ item, onSelect }: Props) => (
   <Pressable
     onPress={() => {
       onSelect(item.name);
-      console.log(item.name);
     }}
     style={({ pressed }) => [
       {

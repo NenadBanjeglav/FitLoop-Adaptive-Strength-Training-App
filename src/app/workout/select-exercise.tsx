@@ -6,6 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
 } from "react-native";
 import { Text, TextInput, View } from "@/components/atoms/Themed";
 
@@ -16,6 +17,9 @@ import ExerciseItem from "@/components/molecules/exercise/ExerciseItem";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useWorkouts } from "@/store";
+import targetMuscles from "@/data/targetMuscles";
+import exercises from "@/data/exercises";
+import equipments from "@/data/equipments";
 
 export default function SelectExerciseScreen() {
   const router = useRouter();
@@ -24,6 +28,9 @@ export default function SelectExerciseScreen() {
   const [search, setSearch] = useState("");
   const [exercisesList, setExercisesList] = useState<Exercise[]>([]);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
+
+  const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
+  const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
 
   const loadMoreExercises = () => {
     if (nextCursor === null) return;
@@ -34,12 +41,27 @@ export default function SelectExerciseScreen() {
   };
 
   useEffect(() => {
-    const result = getPaginatedExercises(0, search);
-    setExercisesList(result.data);
-    setNextCursor(result.nextCursor);
+    const filtered = exercises.filter((exercise) => {
+      const matchesSearch = exercise.name
+        .toLowerCase()
+        .includes(search.toLowerCase());
 
+      const matchesTarget =
+        selectedTargets.length === 0 ||
+        selectedTargets.some((target) =>
+          exercise.targetMuscles.includes(target)
+        );
+
+      const matchesEquipment =
+        selectedEquipments.length === 0 ||
+        selectedEquipments.some((eq) => exercise.equipments.includes(eq));
+
+      return matchesSearch && matchesTarget && matchesEquipment;
+    });
+
+    setExercisesList(filtered);
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-  }, [search]);
+  }, [search, selectedTargets, selectedEquipments]);
 
   const addExercise = useWorkouts((state) => state.addExercise);
 
@@ -51,8 +73,31 @@ export default function SelectExerciseScreen() {
     router.back();
   };
 
+  const toggleTarget = (muscle: string) => {
+    if (selectedTargets.includes(muscle)) {
+      setSelectedTargets(selectedTargets.filter((m) => m !== muscle));
+    } else {
+      setSelectedTargets([...selectedTargets, muscle]);
+    }
+  };
+
+  const toggleEquipment = (equipment: string) => {
+    if (selectedEquipments.includes(equipment)) {
+      setSelectedEquipments(selectedEquipments.filter((e) => e !== equipment));
+    } else {
+      setSelectedEquipments([...selectedEquipments, equipment]);
+    }
+  };
+
+  const clearFilters = () => {
+    setSelectedTargets([]);
+    setSelectedEquipments([]);
+    setSearch("");
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, marginTop: -30 }}>
       <KeyboardAvoidingView
         style={{
           flex: 1,
@@ -61,7 +106,71 @@ export default function SelectExerciseScreen() {
         }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={{ position: "relative", marginTop: 12 }}>
+        <View style={{ gap: 10, marginVertical: 12 }}>
+          <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+            Target Muscle
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {targetMuscles.map((target) => {
+              const selected = selectedTargets.includes(target.name);
+              return (
+                <Pressable
+                  key={target.name}
+                  onPress={() => toggleTarget(target.name)}
+                  style={{
+                    backgroundColor: selected ? "#007AFF" : "#eee",
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 16,
+                    marginRight: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: selected ? "white" : "#333",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {target.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        <View style={{ gap: 10, marginBottom: 12 }}>
+          <Text style={{ fontWeight: "bold", fontSize: 16 }}>Equipment</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {equipments.map((equipment) => {
+              const selected = selectedEquipments.includes(equipment.name);
+              return (
+                <Pressable
+                  key={equipment.name}
+                  onPress={() => toggleEquipment(equipment.name)}
+                  style={{
+                    backgroundColor: selected ? "#34C759" : "#eee",
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 16,
+                    marginRight: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: selected ? "white" : "#333",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {equipment.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        <View style={{ position: "relative", marginVertical: 20 }}>
           <TextInput
             placeholder="Search exercises..."
             value={search}
@@ -90,6 +199,26 @@ export default function SelectExerciseScreen() {
             </Pressable>
           )}
         </View>
+
+        {(selectedTargets.length > 0 ||
+          selectedEquipments.length > 0 ||
+          search.length > 0) && (
+          <Pressable
+            onPress={clearFilters}
+            style={{
+              alignSelf: "center",
+              marginBottom: 10,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 16,
+              backgroundColor: "#FF3B30",
+            }}
+          >
+            <Text style={{ color: "white", fontWeight: "600" }}>
+              Clear Filters
+            </Text>
+          </Pressable>
+        )}
 
         <FlatList
           ref={flatListRef}

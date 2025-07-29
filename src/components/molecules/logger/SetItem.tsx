@@ -1,10 +1,8 @@
-import CustomButton from "@/components/atoms/CustomButton";
 import { Text, TextInput, View } from "@/components/atoms/Themed";
 import { ExerciseSet } from "@/types/models";
 import React, { useState } from "react";
-import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import Feather from "@expo/vector-icons/Feather";
-import { Button } from "react-native";
+import { useWorkouts } from "@/store";
 
 type SetItem = {
   index: number;
@@ -15,51 +13,25 @@ export default function SetItem({ index, set }: SetItem) {
   const [weight, setWeight] = useState(set.weight?.toString() || undefined);
   const [reps, setReps] = useState(set.reps?.toString() || undefined);
 
+  const updateSet = useWorkouts((state) => state.updateSet);
+  const deleteSet = useWorkouts((state) => state.deleteSet);
+
   const handleWeightChange = () => {
-    console.warn("Weight changed to: ", weight);
+    const parsed = parseFloat(weight || "");
+    if (!isNaN(parsed)) {
+      updateSet(set.id, { weight: parsed });
+    }
   };
 
   const handleRepsChange = () => {
-    console.warn("Reps changed to: ", reps);
+    const parsed = parseInt(reps || "", 10);
+    if (!isNaN(parsed)) {
+      updateSet(set.id, { reps: parsed });
+    }
   };
 
-  const renderRightActions = () => (
-    <View
-      style={{
-        width: "auto",
-        justifyContent: "center",
-        alignItems: "center",
-        paddingLeft: 10,
-      }}
-    >
-      <Feather
-        name="trash-2"
-        size={24}
-        color="crimson"
-        onPress={() => console.log("Deleting set: ", set.id)}
-      />
-    </View>
-  );
-
-  // const renderRightActions = () => (
-  //   <View
-  //     style={{
-  //       backgroundColor: "crimson",
-  //       justifyContent: "center",
-  //       alignItems: "center",
-  //       width: 80,
-  //     }}
-  //   >
-  //     <CustomButton
-  //       title="Delete"
-  //       type="link"
-  //       color="white"
-  //       style={{ padding: 5 }}
-  //     />
-  //   </View>
-  // );
   return (
-    <ReanimatedSwipeable renderRightActions={renderRightActions}>
+    <View style={{ flex: 1 }}>
       <View
         style={{
           flexDirection: "row",
@@ -82,7 +54,7 @@ export default function SetItem({ index, set }: SetItem) {
           value={weight}
           placeholderTextColor="lightgray"
           onChangeText={setWeight}
-          onBlur={handleWeightChange}
+          onEndEditing={handleWeightChange}
           keyboardType="numeric"
         />
         <TextInput
@@ -97,10 +69,17 @@ export default function SetItem({ index, set }: SetItem) {
           value={reps}
           placeholderTextColor="lightgray"
           onChangeText={setReps}
-          onBlur={handleRepsChange}
+          onEndEditing={handleRepsChange}
           keyboardType="numeric"
         />
+        <Feather
+          name="trash-2"
+          size={20}
+          color="crimson"
+          onPress={() => deleteSet(set.id)}
+          style={{ marginLeft: 8, padding: 5 }}
+        />
       </View>
-    </ReanimatedSwipeable>
+    </View>
   );
 }

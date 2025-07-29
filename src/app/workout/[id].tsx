@@ -1,6 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
 import { Text } from "@/components/atoms/Themed";
-import dummyWorkouts from "@/data/dummyWorkouts";
 import WorkoutExerciseItem from "@/components/molecules/workouts/WorkoutExerciseItem";
 import { FlatList } from "react-native";
 import dayjs from "dayjs";

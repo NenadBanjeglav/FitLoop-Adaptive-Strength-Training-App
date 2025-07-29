@@ -1,5 +1,6 @@
 import { Exercise, ExerciseSet, ExerciseWithSets } from "@/types/models";
 import { randomUUID } from "expo-crypto";
+import { cleanSets } from "./setService";
 
 export const createExerciseWithSet = (
   workoutId: string,
@@ -22,4 +23,15 @@ export const createExerciseWithSet = (
   };
 
   return loggedExercise;
+};
+
+export const cleanExercise = (exercise: ExerciseWithSets) => {
+  const cleanedSets = cleanSets(exercise.sets);
+
+  if (cleanedSets.length === 0) return null;
+
+  return {
+    ...exercise,
+    sets: cleanedSets,
+  };
 };

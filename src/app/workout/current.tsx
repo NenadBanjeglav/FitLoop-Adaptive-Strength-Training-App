@@ -3,7 +3,12 @@ import WorkoutExerciseItem from "@/components/molecules/logger/WorkoutExerciseIt
 import WorkoutHeader from "@/components/molecules/logger/WorkoutHeader";
 import { useWorkouts } from "@/store";
 import { Redirect, router, Stack } from "expo-router";
-import { FlatList, KeyboardAvoidingView, Platform } from "react-native";
+import {
+  FlatList,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 
 export default function CurrentWorkoutScreen() {
   const currentWorkout = useWorkouts((state) => state.currentWorkout);
@@ -21,7 +26,12 @@ export default function CurrentWorkoutScreen() {
           headerRight: () => (
             <CustomButton
               title="Finish"
-              onPress={() => finishWorkout()}
+              onPress={() => {
+                Keyboard.dismiss(); // force blur input
+                setTimeout(() => {
+                  finishWorkout(); // wait for onBlur to trigger
+                }, 100); // small delay ensures blur handlers fire
+              }}
               style={{ padding: 7, paddingHorizontal: 15, width: "auto" }}
               hitSlop={40}
             />
