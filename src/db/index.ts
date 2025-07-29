@@ -1,6 +1,7 @@
 import { Exercise, Workout } from "@/types/models";
 import rawExercises from "@/data/exercises";
 import * as SQLite from "expo-sqlite";
+import { DbExerciseSet, DbLoggedExercise } from "@/types/db";
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -29,7 +30,7 @@ CREATE TABLE IF NOT EXISTS sets (
   exercise_id TEXT NOT NULL,
   reps INTEGER,
   weight REAL,
-  FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE CASCADE
+  FOREIGN KEY (exercise_id) REFERENCES logged_exercises(id) ON DELETE CASCADE
 );`;
 
 export const createCatalogExercisesTableQuery = `
@@ -50,6 +51,8 @@ export const getDB = async (): Promise<SQLite.SQLiteDatabase> => {
   db = await SQLite.openDatabaseAsync(dbName);
 
   //set up tables
+
+  await db.execAsync("PRAGMA foreign_keys = ON");
 
   await db.execAsync(createCatalogExercisesTableQuery);
   await db.execAsync(createLoggedExercisesTableQuery);
@@ -199,4 +202,95 @@ export const getAllExercisesFromDB = async (): Promise<Exercise[]> => {
     equipments: row.equipments.split(","),
     instructions: row.instructions.split("||"),
   }));
+};
+
+export const insertSetToDB = async (set: DbExerciseSet): Promise<void> => {
+  const db = await getDB();
+
+  await db.runAsync(
+    `INSERT INTO sets (id, exercise_id, reps, weight) VALUES (?, ?, ?, ?)`,
+    set.id,
+    set.exerciseId,
+    set.reps ?? null,
+    set.weight ?? null
+  );
+};
+
+export const updateSetInDB = async (
+  id: string,
+  updates: Partial<{ reps: number; weight: number }>
+): Promise<void> => {
+  const db = await getDB();
+
+  const fields = [];
+  const values = [];
+
+  if (updates.reps !== undefined) {
+    fields.push("reps = ?");
+    values.push(updates.reps);
+  }
+  if (updates.weight !== undefined) {
+    fields.push("weight = ?");
+    values.push(updates.weight);
+  }
+
+  if (fields.length === 0) return;
+
+  values.push(id);
+
+  await db.runAsync(
+    `UPDATE sets SET ${fields.join(", ")} WHERE id = ?`,
+    ...values
+  );
+};
+
+export const deleteSetFromDB = async (id: string): Promise<void> => {
+  const db = await getDB();
+  await db.runAsync(`DELETE FROM sets WHERE id = ?`, id);
+};
+
+export const getLoggedExercisesForWorkout = async (
+  workoutId: string
+): Promise<DbLoggedExercise[]> => {
+  const db = await getDB();
+
+  const results = await db.getAllAsync<DbLoggedExercise>(
+    `SELECT id, workout_id as workoutId, catalog_exercise_id as catalogExerciseId, name, gif_url as gifUrl
+     FROM logged_exercises
+     WHERE workout_id = ?`,
+    workoutId
+  );
+
+  return results;
+};
+
+export const getSetsForExercise = async (
+  exerciseId: string
+): Promise<DbExerciseSet[]> => {
+  const db = await getDB();
+
+  const results = await db.getAllAsync<DbExerciseSet>(
+    `SELECT id, exercise_id as exerciseId, reps, weight
+     FROM sets
+     WHERE exercise_id = ?`,
+    exerciseId
+  );
+
+  return results;
+};
+
+export const insertLoggedExercise = async (
+  exercise: DbLoggedExercise
+): Promise<void> => {
+  const db = await getDB();
+
+  await db.runAsync(
+    `INSERT INTO logged_exercises (id, workout_id, catalog_exercise_id, name, gif_url)
+     VALUES (?, ?, ?, ?, ?)`,
+    exercise.id,
+    exercise.workoutId,
+    exercise.catalogExerciseId,
+    exercise.name,
+    exercise.gifUrl
+  );
 };

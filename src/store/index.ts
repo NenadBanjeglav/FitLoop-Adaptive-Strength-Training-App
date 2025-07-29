@@ -1,9 +1,6 @@
 import { Exercise, ExerciseSet, WorkoutWithExercises } from "@/types/models";
 import { create } from "zustand";
 import * as Crypto from "expo-crypto";
-import { createExerciseWithSet } from "@/services/exerciseService";
-import { createSet } from "@/services/setService";
-import { cleanWorkout } from "@/services/workoutService";
 
 import {
   deleteWorkoutFromDB,
@@ -11,7 +8,18 @@ import {
   getCurrentWorkout,
   saveWorkout,
   updateWorkout,
+  insertSetToDB,
+  updateSetInDB,
+  deleteSetFromDB,
+  getLoggedExercisesForWorkout,
+  getSetsForExercise,
+  insertLoggedExercise,
 } from "@/db";
+import {
+  cleanWorkout,
+  createExerciseWithSet,
+  createSet,
+} from "@/services/service";
 
 type State = {
   currentWorkout: WorkoutWithExercises | null;
@@ -80,13 +88,13 @@ export const useWorkouts = create<State & Actions>()((set, get) => ({
       workouts: [finishedWorkout, ...state.workouts],
     }));
   },
+
   discardCurrentWorkout: () => {
     set({ currentWorkout: null });
   },
 
-  addExercise: (catalogExercise) => {
+  addExercise: async (catalogExercise) => {
     const { currentWorkout } = get();
-
     if (!currentWorkout) return;
 
     const newExercise = createExerciseWithSet(
@@ -94,6 +102,21 @@ export const useWorkouts = create<State & Actions>()((set, get) => ({
       catalogExercise
     );
 
+    // 🔹 Save logged_exercise to SQLite
+    await insertLoggedExercise({
+      id: newExercise.id,
+      workoutId: currentWorkout.id,
+      catalogExerciseId: catalogExercise.exerciseId,
+      name: catalogExercise.name,
+      gifUrl: catalogExercise.gifUrl,
+    });
+
+    // 🔹 Save first set to SQLite
+    if (newExercise.sets.length > 0) {
+      await insertSetToDB(newExercise.sets[0]);
+    }
+
+    // 🔹 Update state
     set((state) => ({
       currentWorkout: {
         ...state.currentWorkout!,
@@ -104,6 +127,8 @@ export const useWorkouts = create<State & Actions>()((set, get) => ({
 
   addSet: (exerciseId) => {
     const newSet = createSet(exerciseId);
+
+    insertSetToDB(newSet); // ✅ Save to DB
 
     set((state) => {
       const workout = state.currentWorkout;
@@ -129,6 +154,8 @@ export const useWorkouts = create<State & Actions>()((set, get) => ({
   },
 
   updateSet: (setId, updatedFields) => {
+    updateSetInDB(setId, updatedFields); // ✅ Persist
+
     set((state) => {
       const workout = state.currentWorkout;
       if (!workout) return {};
@@ -159,6 +186,8 @@ export const useWorkouts = create<State & Actions>()((set, get) => ({
     });
   },
   deleteSet: (setId) => {
+    deleteSetFromDB(setId); // ✅ Remove from DB
+
     set((state) => {
       const workout = state.currentWorkout;
       if (!workout) return {};
@@ -180,21 +209,46 @@ export const useWorkouts = create<State & Actions>()((set, get) => ({
   },
   hydrateCurrentWorkout: async () => {
     const workout = await getCurrentWorkout();
+    if (!workout) return;
 
-    if (workout) {
-      set({ currentWorkout: { ...workout, exercises: [] } });
-    }
+    const loggedExercises = await getLoggedExercisesForWorkout(workout.id);
+
+    const exercisesWithSets = await Promise.all(
+      loggedExercises.map(async (ex) => ({
+        ...ex,
+        sets: await getSetsForExercise(ex.id),
+      }))
+    );
+
+    set({
+      currentWorkout: {
+        ...workout,
+        exercises: exercisesWithSets,
+      },
+    });
   },
   loadWorkouts: async () => {
     const workouts = await getAllWorkouts();
 
-    // Currently, no exercises are loaded — you'll want to hydrate them later
-    const withEmptyExercises = workouts.map((w) => ({
-      ...w,
-      exercises: [],
-    }));
+    const workoutsWithExercises: WorkoutWithExercises[] = await Promise.all(
+      workouts.map(async (workout) => {
+        const loggedExercises = await getLoggedExercisesForWorkout(workout.id);
 
-    set({ workouts: withEmptyExercises });
+        const exercisesWithSets = await Promise.all(
+          loggedExercises.map(async (ex) => ({
+            ...ex,
+            sets: await getSetsForExercise(ex.id),
+          }))
+        );
+
+        return {
+          ...workout,
+          exercises: exercisesWithSets,
+        };
+      })
+    );
+
+    set({ workouts: workoutsWithExercises });
   },
   deleteWorkout: async (id) => {
     await deleteWorkoutFromDB(id); // deletes from SQLite

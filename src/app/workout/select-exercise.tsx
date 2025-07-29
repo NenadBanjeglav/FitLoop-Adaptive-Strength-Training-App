@@ -11,7 +11,6 @@ import {
 import { Text, TextInput, View } from "@/components/atoms/Themed";
 
 import { Exercise } from "@/types/models";
-import { getPaginatedExercises } from "@/utils";
 
 import ExerciseItem from "@/components/molecules/exercise/ExerciseItem";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,7 +20,7 @@ import targetMuscles from "@/data/targetMuscles";
 import equipments from "@/data/equipments";
 import { Stack } from "expo-router";
 import { getAllExercisesFromDB } from "@/db";
-import { getPaginatedCatalogExercises } from "@/services/exerciseService";
+import { getPaginatedCatalogExercises } from "@/services/service";
 
 export default function SelectExerciseScreen() {
   const router = useRouter();

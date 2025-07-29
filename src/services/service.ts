@@ -1,7 +1,55 @@
-import { Exercise, ExerciseSet, ExerciseWithSets } from "@/types/models";
+import { WorkoutWithExercises } from "@/types/models";
+
+import { ExerciseSet } from "@/types/models";
 import { randomUUID } from "expo-crypto";
-import { cleanSets } from "./setService";
+import { Exercise, ExerciseWithSets } from "@/types/models";
+
 import { getDB } from "@/db";
+
+export const cleanWorkout = (workout: WorkoutWithExercises) => {
+  const cleanedExercises = workout.exercises
+    .map(cleanExercise)
+    .filter((e) => e !== null);
+
+  return {
+    ...workout,
+    exercises: cleanedExercises,
+  };
+};
+
+export const createSet = (exerciseId: string) => {
+  const newSet: ExerciseSet = {
+    id: randomUUID(),
+    exerciseId,
+  };
+
+  return newSet;
+};
+
+export const updateSet = (
+  set: ExerciseSet,
+  updatedFields: Pick<ExerciseSet, "reps" | "weight">
+) => {
+  const updatedSet = { ...set };
+
+  if (updatedFields.reps !== undefined) {
+    updatedSet.reps = updatedFields.reps;
+  }
+
+  if (updatedFields.weight !== undefined) {
+    updatedSet.weight = updatedFields.weight;
+  }
+
+  return updatedSet;
+};
+
+const isSetComplete = (set: ExerciseSet) => {
+  return typeof set.reps === "number" && set.reps > 0;
+};
+
+export const cleanSets = (sets: ExerciseSet[]) => {
+  return sets.filter(isSetComplete);
+};
 
 export const createExerciseWithSet = (
   workoutId: string,
