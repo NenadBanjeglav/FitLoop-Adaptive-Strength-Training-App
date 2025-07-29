@@ -1,17 +1,17 @@
-export type Workout = {
+export type DbWorkout = {
   id: string;
   createdAt: Date;
   finishedAt: Date | null;
 };
 
-export type ExerciseSet = {
+export type DbExerciseSet = {
   id: string;
   exerciseId: string;
   reps?: number;
   weight?: number;
 };
 
-export type LoggedExercise = {
+export type DbLoggedExercise = {
   id: string;
   workoutId: string;
   catalogExerciseId: string;
@@ -19,7 +19,7 @@ export type LoggedExercise = {
   gifUrl: string; // snapshot
 };
 
-export type Exercise = {
+export type DbExercise = {
   exerciseId: string;
   name: string;
   gifUrl: string;
@@ -28,13 +28,4 @@ export type Exercise = {
   equipments: string[];
   secondaryMuscles: string[];
   instructions: string[];
-};
-
-// Additional types for nested structures
-export type WorkoutWithExercises = Workout & {
-  exercises: ExerciseWithSets[];
-};
-
-export type ExerciseWithSets = LoggedExercise & {
-  sets: ExerciseSet[];
 };

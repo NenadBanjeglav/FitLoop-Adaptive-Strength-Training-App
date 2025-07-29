@@ -18,8 +18,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useWorkouts } from "@/store";
 import targetMuscles from "@/data/targetMuscles";
-import exercises from "@/data/exercises";
 import equipments from "@/data/equipments";
+import { Stack } from "expo-router";
+import { getAllExercisesFromDB } from "@/db";
+import { getPaginatedCatalogExercises } from "@/services/exerciseService";
 
 export default function SelectExerciseScreen() {
   const router = useRouter();
@@ -28,39 +30,61 @@ export default function SelectExerciseScreen() {
   const [search, setSearch] = useState("");
   const [exercisesList, setExercisesList] = useState<Exercise[]>([]);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
-
+  const [cursor, setCursor] = useState(0);
   const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
 
-  const loadMoreExercises = () => {
-    if (nextCursor === null) return;
+  const loadExercises = async (reset = false) => {
+    const { data, nextCursor } = await getPaginatedCatalogExercises(
+      reset ? 0 : cursor,
+      20,
+      search,
+      selectedTargets,
+      selectedEquipments
+    );
 
-    const result = getPaginatedExercises(nextCursor, search);
-    setExercisesList((prev) => [...prev, ...result.data]);
-    setNextCursor(result.nextCursor);
+    setExercisesList((prev) => (reset ? data : [...prev, ...data]));
+    setCursor(nextCursor ?? 0);
+    setNextCursor(nextCursor);
   };
 
   useEffect(() => {
-    const filtered = exercises.filter((exercise) => {
-      const matchesSearch = exercise.name
-        .toLowerCase()
-        .includes(search.toLowerCase());
+    loadExercises(true);
+  }, [search, selectedTargets, selectedEquipments]);
 
-      const matchesTarget =
-        selectedTargets.length === 0 ||
-        selectedTargets.some((target) =>
-          exercise.targetMuscles.includes(target)
-        );
+  const loadMoreExercises = () => {
+    if (nextCursor !== null) {
+      loadExercises();
+    }
+  };
 
-      const matchesEquipment =
-        selectedEquipments.length === 0 ||
-        selectedEquipments.some((eq) => exercise.equipments.includes(eq));
+  useEffect(() => {
+    const fetchAndFilter = async () => {
+      const allExercises = await getAllExercisesFromDB();
 
-      return matchesSearch && matchesTarget && matchesEquipment;
-    });
+      const filtered = allExercises.filter((exercise) => {
+        const matchesSearch = exercise.name
+          .toLowerCase()
+          .includes(search.toLowerCase());
 
-    setExercisesList(filtered);
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        const matchesTarget =
+          selectedTargets.length === 0 ||
+          selectedTargets.some((target) =>
+            exercise.targetMuscles.includes(target)
+          );
+
+        const matchesEquipment =
+          selectedEquipments.length === 0 ||
+          selectedEquipments.some((eq) => exercise.equipments.includes(eq));
+
+        return matchesSearch && matchesTarget && matchesEquipment;
+      });
+
+      setExercisesList(filtered);
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    };
+
+    fetchAndFilter();
   }, [search, selectedTargets, selectedEquipments]);
 
   const addExercise = useWorkouts((state) => state.addExercise);
@@ -97,151 +121,158 @@ export default function SelectExerciseScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, marginTop: -30 }}>
-      <KeyboardAvoidingView
-        style={{
-          flex: 1,
-          backgroundColor: "white",
-          paddingHorizontal: 20,
+    <>
+      <Stack.Screen
+        options={{
+          headerRight: () =>
+            selectedTargets.length > 0 ||
+            selectedEquipments.length > 0 ||
+            search.length > 0 ? (
+              <Pressable
+                onPress={clearFilters}
+                style={({ pressed }) => ({
+                  marginRight: 12,
+                  paddingVertical: 6,
+                  paddingHorizontal: 10,
+                  opacity: pressed ? 0.6 : 1,
+                })}
+                hitSlop={10}
+              >
+                <Text style={{ color: "#FF3B30", fontWeight: "600" }}>
+                  Clear
+                </Text>
+              </Pressable>
+            ) : null,
         }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        <View style={{ gap: 10, marginVertical: 12 }}>
-          <Text style={{ fontWeight: "bold", fontSize: 16 }}>
-            Target Muscle
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {targetMuscles.map((target) => {
-              const selected = selectedTargets.includes(target.name);
-              return (
-                <Pressable
-                  key={target.name}
-                  onPress={() => toggleTarget(target.name)}
-                  style={{
-                    backgroundColor: selected ? "#007AFF" : "#eee",
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 16,
-                    marginRight: 8,
-                  }}
-                >
-                  <Text
+      />
+      <SafeAreaView style={{ flex: 1, marginTop: -30 }}>
+        <KeyboardAvoidingView
+          style={{
+            flex: 1,
+            backgroundColor: "white",
+            paddingHorizontal: 20,
+          }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <View style={{ gap: 10, marginVertical: 12 }}>
+            <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+              Target Muscle
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {targetMuscles.map((target) => {
+                const selected = selectedTargets.includes(target.name);
+                return (
+                  <Pressable
+                    key={target.name}
+                    onPress={() => toggleTarget(target.name)}
                     style={{
-                      color: selected ? "white" : "#333",
-                      fontWeight: "500",
+                      backgroundColor: selected ? "#007AFF" : "#eee",
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 16,
+                      marginRight: 8,
                     }}
                   >
-                    {target.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
+                    <Text
+                      style={{
+                        color: selected ? "white" : "#333",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {target.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
 
-        <View style={{ gap: 10, marginBottom: 12 }}>
-          <Text style={{ fontWeight: "bold", fontSize: 16 }}>Equipment</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {equipments.map((equipment) => {
-              const selected = selectedEquipments.includes(equipment.name);
-              return (
-                <Pressable
-                  key={equipment.name}
-                  onPress={() => toggleEquipment(equipment.name)}
-                  style={{
-                    backgroundColor: selected ? "#34C759" : "#eee",
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 16,
-                    marginRight: 8,
-                  }}
-                >
-                  <Text
+          <View style={{ gap: 10, marginBottom: 12 }}>
+            <Text style={{ fontWeight: "bold", fontSize: 16 }}>Equipment</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {equipments.map((equipment) => {
+                const selected = selectedEquipments.includes(equipment.name);
+                return (
+                  <Pressable
+                    key={equipment.name}
+                    onPress={() => toggleEquipment(equipment.name)}
                     style={{
-                      color: selected ? "white" : "#333",
-                      fontWeight: "500",
+                      backgroundColor: selected ? "#34C759" : "#eee",
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 16,
+                      marginRight: 8,
                     }}
                   >
-                    {equipment.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
+                    <Text
+                      style={{
+                        color: selected ? "white" : "#333",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {equipment.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
 
-        <View style={{ position: "relative", marginVertical: 20 }}>
-          <TextInput
-            placeholder="Search exercises..."
-            value={search}
-            onChangeText={setSearch}
-            style={{
-              padding: 10,
-              paddingRight: 32, // reserve space for icon
-              borderRadius: 8,
-              borderWidth: 1,
-              borderColor: "#ccc",
-              backgroundColor: "#f9f9f9",
-            }}
-          />
-          {search.length > 0 && (
-            <Pressable
-              onPress={() => setSearch("")}
+          <View style={{ position: "relative", marginVertical: 20 }}>
+            <TextInput
+              placeholder="Search exercises..."
+              value={search}
+              onChangeText={setSearch}
               style={{
-                position: "absolute",
-                right: 10,
-                top: "50%",
-                transform: [{ translateY: -10 }],
+                padding: 10,
+                paddingRight: 32, // reserve space for icon
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: "#ccc",
+                backgroundColor: "#f9f9f9",
               }}
-              hitSlop={10}
-            >
-              <Ionicons name="close-circle" size={20} color="#888" />
-            </Pressable>
-          )}
-        </View>
+            />
+            {search.length > 0 && (
+              <Pressable
+                onPress={() => setSearch("")}
+                style={{
+                  position: "absolute",
+                  right: 10,
+                  top: "50%",
+                  transform: [{ translateY: -10 }],
+                }}
+                hitSlop={10}
+              >
+                <Ionicons name="close-circle" size={20} color="#888" />
+              </Pressable>
+            )}
+          </View>
 
-        {(selectedTargets.length > 0 ||
-          selectedEquipments.length > 0 ||
-          search.length > 0) && (
-          <Pressable
-            onPress={clearFilters}
-            style={{
-              alignSelf: "center",
-              marginBottom: 10,
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              borderRadius: 16,
-              backgroundColor: "#FF3B30",
-            }}
-          >
-            <Text style={{ color: "white", fontWeight: "600" }}>
-              Clear Filters
-            </Text>
-          </Pressable>
-        )}
-
-        <FlatList
-          ref={flatListRef}
-          data={exercisesList}
-          initialNumToRender={10}
-          maxToRenderPerBatch={8}
-          keyExtractor={(item) => item.exerciseId || item.name}
-          renderItem={({ item }) => (
-            <ExerciseItem item={item} onSelect={handleSelect} />
-          )}
-          contentContainerStyle={{ paddingBottom: 40 }}
-          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-          ListEmptyComponent={
-            <Text style={{ textAlign: "center", color: "gray", marginTop: 40 }}>
-              No exercises found.
-            </Text>
-          }
-          onEndReached={loadMoreExercises}
-          onEndReachedThreshold={0.5}
-          bounces={false}
-          keyboardShouldPersistTaps="handled"
-        />
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          <FlatList
+            ref={flatListRef}
+            data={exercisesList}
+            initialNumToRender={10}
+            maxToRenderPerBatch={8}
+            keyExtractor={(item) => item.exerciseId || item.name}
+            renderItem={({ item }) => (
+              <ExerciseItem item={item} onSelect={handleSelect} />
+            )}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+            ListEmptyComponent={
+              <Text
+                style={{ textAlign: "center", color: "gray", marginTop: 40 }}
+              >
+                No exercises found.
+              </Text>
+            }
+            onEndReached={loadMoreExercises}
+            onEndReachedThreshold={0.5}
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+          />
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </>
   );
 }

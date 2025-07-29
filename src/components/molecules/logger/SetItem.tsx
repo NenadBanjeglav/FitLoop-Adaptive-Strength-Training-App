@@ -3,6 +3,7 @@ import { ExerciseSet } from "@/types/models";
 import React, { useState } from "react";
 import Feather from "@expo/vector-icons/Feather";
 import { useWorkouts } from "@/store";
+import { Alert } from "react-native";
 
 type SetItem = {
   index: number;
@@ -28,6 +29,17 @@ export default function SetItem({ index, set }: SetItem) {
     if (!isNaN(parsed)) {
       updateSet(set.id, { reps: parsed });
     }
+  };
+
+  const confirmDelete = () => {
+    Alert.alert("Delete Set", "Are you sure you want to delete this set?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => deleteSet(set.id),
+      },
+    ]);
   };
 
   return (
@@ -76,7 +88,7 @@ export default function SetItem({ index, set }: SetItem) {
           name="trash-2"
           size={20}
           color="crimson"
-          onPress={() => deleteSet(set.id)}
+          onPress={confirmDelete}
           style={{ marginLeft: 8, padding: 5 }}
         />
       </View>
