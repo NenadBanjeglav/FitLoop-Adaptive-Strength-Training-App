@@ -4,7 +4,6 @@ import { Text, View } from "@/components/atoms/Themed";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Exercise } from "@/types/models";
-
 import { capitalizeWords } from "@/utils";
 import MuscleBadge from "./MuscleBadge";
 
