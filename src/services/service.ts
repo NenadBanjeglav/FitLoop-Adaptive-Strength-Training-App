@@ -150,3 +150,35 @@ export const getPaginatedCatalogExercises = async (
 
   return { data, nextCursor };
 };
+
+export const cleanIncompleteExercisesFromDB = async (workoutId: string) => {
+  const db = await getDB();
+
+  const exercises = await db.getAllAsync<{ id: string }>(
+    "SELECT id FROM logged_exercises WHERE workout_id = ?",
+    workoutId
+  );
+
+  for (const { id: exerciseId } of exercises) {
+    const sets = await db.getAllAsync<{ reps: number | null }>(
+      "SELECT reps FROM sets WHERE exercise_id = ?",
+      exerciseId
+    );
+
+    const validSets = sets.filter((s) => s.reps && s.reps > 0);
+
+    if (validSets.length === 0) {
+      // ⛔ No valid sets: delete entire exercise (and cascade its sets)
+      await db.runAsync(
+        "DELETE FROM logged_exercises WHERE id = ?",
+        exerciseId
+      );
+    } else {
+      // 🧹 Remove invalid sets only
+      await db.runAsync(
+        "DELETE FROM sets WHERE exercise_id = ? AND (reps IS NULL OR reps = 0)",
+        exerciseId
+      );
+    }
+  }
+};

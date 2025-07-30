@@ -50,14 +50,17 @@ export const getDB = async (): Promise<SQLite.SQLiteDatabase> => {
 
   db = await SQLite.openDatabaseAsync(dbName);
 
-  //set up tables
-
+  // ✅ Ensure FK constraints apply to ALL subsequent operations
   await db.execAsync("PRAGMA foreign_keys = ON");
 
-  await db.execAsync(createCatalogExercisesTableQuery);
-  await db.execAsync(createLoggedExercisesTableQuery);
-  await db.execAsync(createWorkoutsTableQuery);
-  await db.execAsync(createSetsTableQuery);
+  // ✅ Recreate everything in correct order
+  await db.withTransactionAsync(async () => {
+    if (!db) return;
+    await db.execAsync(createCatalogExercisesTableQuery);
+    await db.execAsync(createLoggedExercisesTableQuery);
+    await db.execAsync(createWorkoutsTableQuery);
+    await db.execAsync(createSetsTableQuery);
+  });
 
   return db;
 };

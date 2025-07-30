@@ -16,6 +16,7 @@ import {
   insertLoggedExercise,
 } from "@/db";
 import {
+  cleanIncompleteExercisesFromDB,
   cleanWorkout,
   createExerciseWithSet,
   createSet,
@@ -64,11 +65,14 @@ export const useWorkouts = create<State & Actions>()((set, get) => ({
   finishWorkout: async () => {
     const { currentWorkout } = get();
 
-    if (!currentWorkout) {
-      return;
-    }
+    if (!currentWorkout) return;
+
+    // 🔹 Clean DB: remove invalid sets + empty exercises
+    await cleanIncompleteExercisesFromDB(currentWorkout.id);
 
     const finishedAt = new Date();
+
+    // 🔹 Pull fresh, cleaned data from memory
     const finishedWorkout = cleanWorkout({
       ...currentWorkout,
       finishedAt,
@@ -76,19 +80,23 @@ export const useWorkouts = create<State & Actions>()((set, get) => ({
 
     if (finishedWorkout.exercises.length === 0) {
       console.warn("Workout not saved: no valid exercises/sets.");
+
+      // ⛔️ Delete empty workout from DB (MISSING LINE FIXED)
+      await deleteWorkoutFromDB(currentWorkout.id);
+
       set({ currentWorkout: null });
       return;
     }
 
-    // Update workout in DB
+    // 🔹 Mark workout as finished in DB
     await updateWorkout(finishedWorkout.id, finishedAt);
 
+    // 🔹 Save to in-memory store
     set((state) => ({
       currentWorkout: null,
       workouts: [finishedWorkout, ...state.workouts],
     }));
   },
-
   discardCurrentWorkout: () => {
     set({ currentWorkout: null });
   },

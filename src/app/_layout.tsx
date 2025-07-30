@@ -11,15 +11,7 @@ import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import * as SQLite from "expo-sqlite";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import {
-  createCatalogExercisesTableQuery,
-  createLoggedExercisesTableQuery,
-  createSetsTableQuery,
-  createWorkoutsTableQuery,
-  dbName,
-  getDB,
-  seedCatalogExercises,
-} from "@/db";
+import { dbName, getDB, seedCatalogExercises } from "@/db";
 import { useWorkouts } from "@/store";
 
 DarkTheme.colors.primary = Colors.dark.tint;
@@ -37,30 +29,6 @@ export default function RootLayout() {
     (state) => state.hydrateCurrentWorkout
   );
   const loadWorkouts = useWorkouts((state) => state.loadWorkouts);
-
-  // useEffect(() => {
-  //   const wipeDB = async () => {
-  //     try {
-  //       if (__DEV__) {
-  //         await SQLite.deleteDatabaseAsync("fitLoop.db");
-  //         console.log("✅ Deleted DB file");
-
-  //         const db = await SQLite.openDatabaseAsync("fitLoop.db");
-
-  //         await db.execAsync(createCatalogExercisesTableQuery);
-  //         await db.execAsync(createWorkoutsTableQuery);
-  //         await db.execAsync(createLoggedExercisesTableQuery);
-  //         await db.execAsync(createSetsTableQuery);
-
-  //         await seedCatalogExercises();
-
-  //         console.log("✅ Recreated + seeded DB");
-  //       }
-  //     } catch (err) {
-  //       console.error("❌ Failed to reset database:", err);
-  //     }
-  //   };
-  // });
 
   useEffect(() => {
     seedCatalogExercises();
