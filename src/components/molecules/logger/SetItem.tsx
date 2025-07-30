@@ -1,21 +1,37 @@
 import { Text, TextInput, View } from "@/components/atoms/Themed";
 import { ExerciseSet } from "@/types/models";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Feather from "@expo/vector-icons/Feather";
 import { useWorkouts } from "@/store";
 import { Alert } from "react-native";
+import { TextInput as RNTextInput } from "react-native";
 
 type SetItem = {
   index: number;
   set: ExerciseSet;
 };
 
-export default function SetItem({ index, set }: SetItem) {
+export default function SetItem({
+  index,
+  set,
+  autoFocus = false,
+}: SetItem & { autoFocus?: boolean }) {
+  const weightRef = useRef<RNTextInput>(null);
   const [weight, setWeight] = useState(set.weight?.toString() || undefined);
   const [reps, setReps] = useState(set.reps?.toString() || undefined);
 
   const updateSet = useWorkouts((state) => state.updateSet);
   const deleteSet = useWorkouts((state) => state.deleteSet);
+
+  useEffect(() => {
+    if (autoFocus && weightRef.current) {
+      const timeout = setTimeout(() => {
+        weightRef.current?.focus();
+      }, 250); // try between 150–300ms if it feels off
+
+      return () => clearTimeout(timeout);
+    }
+  }, [autoFocus]);
 
   const handleWeightChange = () => {
     const parsed = parseFloat(weight || "");
@@ -55,6 +71,7 @@ export default function SetItem({ index, set }: SetItem) {
           {index + 1}
         </Text>
         <TextInput
+          ref={weightRef}
           style={{
             width: 60,
             padding: 5,

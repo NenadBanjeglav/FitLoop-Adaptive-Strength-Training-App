@@ -13,11 +13,25 @@ import {
   Pressable,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useEffect, useRef } from "react";
 
 export default function CurrentWorkoutScreen() {
   const currentWorkout = useWorkouts((state) => state.currentWorkout);
   const finishWorkout = useWorkouts((state) => state.finishWorkout);
   const discardWorkout = useWorkouts((state) => state.discardCurrentWorkout);
+  const lastAddedExerciseId = useWorkouts((state) => state.lastAddedExerciseId);
+
+  const listRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    if (lastAddedExerciseId) {
+      const timeout = setTimeout(() => {
+        listRef.current?.scrollToEnd({ animated: true });
+      }, 100); // you can tweak this
+
+      return () => clearTimeout(timeout);
+    }
+  }, [lastAddedExerciseId]);
 
   if (!currentWorkout) {
     return <Redirect href={"/"} />;
@@ -107,10 +121,18 @@ export default function CurrentWorkoutScreen() {
         keyboardVerticalOffset={110}
       >
         <FlatList
+          ref={listRef}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           contentContainerStyle={{ gap: 10, padding: 10 }}
           data={currentWorkout.exercises}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <WorkoutExerciseItem exercise={item} />}
+          renderItem={({ item }) => (
+            <WorkoutExerciseItem
+              exercise={item}
+              autoFocus={item.id === lastAddedExerciseId}
+            />
+          )}
           ListHeaderComponent={<WorkoutHeader />}
           ListFooterComponent={
             <CustomButton

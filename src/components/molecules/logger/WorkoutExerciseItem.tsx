@@ -11,7 +11,10 @@ type WorkoutExerciseItem = {
   exercise: ExerciseWithSets;
 };
 
-export default function WorkoutExerciseItem({ exercise }: WorkoutExerciseItem) {
+export default function WorkoutExerciseItem({
+  exercise,
+  autoFocus = false,
+}: WorkoutExerciseItem & { autoFocus?: boolean }) {
   const addSet = useWorkouts((state) => state.addSet);
 
   return (
@@ -45,7 +48,12 @@ export default function WorkoutExerciseItem({ exercise }: WorkoutExerciseItem) {
 
       <View style={{ gap: 5 }}>
         {exercise.sets.map((item, idx) => (
-          <SetItem key={item.id} index={idx} set={item} />
+          <SetItem
+            key={item.id}
+            index={idx}
+            set={item}
+            autoFocus={autoFocus && idx === 0}
+          />
         ))}
       </View>
 

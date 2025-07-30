@@ -2,10 +2,12 @@ import {
   Text as DefaultText,
   View as DefaultView,
   TextInput as DefaultTextInput,
+  TextInput as RNTextInput,
   useColorScheme,
 } from "react-native";
 
 import Colors from "@/constants/colors";
+import React from "react";
 
 type ThemeProps = {
   lightColor?: string;
@@ -47,18 +49,36 @@ export function View(props: ViewProps) {
   return <DefaultView style={[{ backgroundColor }, style]} {...otherProps} />;
 }
 
-export function TextInput(props: TextInputProps) {
-  const { style, lightColor, darkColor, ...otherProps } = props;
-  const backgroundColor = useThemeColor(
-    { light: lightColor, dark: darkColor },
-    "textInputBackground"
-  );
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, "text");
+// export function TextInput(props: TextInputProps) {
+//   const { style, lightColor, darkColor, ...otherProps } = props;
+//   const backgroundColor = useThemeColor(
+//     { light: lightColor, dark: darkColor },
+//     "textInputBackground"
+//   );
+//   const color = useThemeColor({ light: lightColor, dark: darkColor }, "text");
 
-  return (
-    <DefaultTextInput
-      style={[{ backgroundColor, color }, style]}
-      {...otherProps}
-    />
-  );
-}
+//   return (
+//     <DefaultTextInput
+//       style={[{ backgroundColor, color }, style]}
+//       {...otherProps}
+//     />
+//   );
+// }
+
+export const TextInput = React.forwardRef<RNTextInput, TextInputProps>(
+  ({ style, lightColor, darkColor, ...otherProps }, ref) => {
+    const backgroundColor = useThemeColor(
+      { light: lightColor, dark: darkColor },
+      "textInputBackground"
+    );
+    const color = useThemeColor({ light: lightColor, dark: darkColor }, "text");
+
+    return (
+      <DefaultTextInput
+        ref={ref} // ✅ forwarded ref here
+        style={[{ backgroundColor, color }, style]}
+        {...otherProps}
+      />
+    );
+  }
+);

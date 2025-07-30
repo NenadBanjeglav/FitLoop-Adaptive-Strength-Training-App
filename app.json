@@ -21,7 +21,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.maradil.FitLoop"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -30,6 +31,12 @@
     "plugins": [
       "expo-router",
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "66ee982e-524e-437a-a239-b56cece515c9"
+      }
+    }
   }
 }

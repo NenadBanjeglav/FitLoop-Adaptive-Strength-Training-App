@@ -25,6 +25,7 @@ import {
 type State = {
   currentWorkout: WorkoutWithExercises | null;
   workouts: WorkoutWithExercises[];
+  lastAddedExerciseId: string | null;
 };
 
 type Actions = {
@@ -41,12 +42,14 @@ type Actions = {
   ) => void;
   deleteSet: (setId: string) => void;
   deleteWorkout: (id: string) => Promise<void>;
+  setLastAddedExerciseId: (id: string) => void;
 };
 
 export const useWorkouts = create<State & Actions>()((set, get) => ({
   //state
   currentWorkout: null,
   workouts: [],
+  lastAddedExerciseId: null,
 
   //actions
   startWorkout: async () => {
@@ -109,6 +112,7 @@ export const useWorkouts = create<State & Actions>()((set, get) => ({
       currentWorkout.id,
       catalogExercise
     );
+    set({ lastAddedExerciseId: newExercise.id });
 
     // 🔹 Save logged_exercise to SQLite
     await insertLoggedExercise({
@@ -265,4 +269,5 @@ export const useWorkouts = create<State & Actions>()((set, get) => ({
       workouts: state.workouts.filter((w) => w.id !== id),
     }));
   },
+  setLastAddedExerciseId: (id) => set({ lastAddedExerciseId: id }),
 }));
